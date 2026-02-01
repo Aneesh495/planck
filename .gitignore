@@ -1,0 +1,11 @@
+bin/
+obj/
+*.o
+*.bin
+*.elf
+*.out
+.DS_Store
+*.swp
+*~
+.vscode/
+.idea/
