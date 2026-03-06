@@ -16,14 +16,26 @@ SRC_HOST = \
 	src/host/time.asm \
 	src/host/file.asm
 
-SRC_CORE =
+SRC_CORE = \
+	src/core/cpu.asm \
+	src/core/bits.asm \
+	src/core/decode.asm \
+	src/core/trap.asm \
+	src/core/csr.asm \
+	src/core/exec.asm \
+	src/core/exec_alu.asm \
+	src/core/exec_mem.asm \
+	src/core/exec_br.asm \
+	src/core/exec_m.asm \
+	src/core/exec_sys.asm \
+	src/core/interp.asm
 SRC_ASM  =
 SRC_DIS  =
 SRC_CACHE=
 SRC_PRED =
 SRC_OOO  =
 SRC_STAT =
-SRC_MON  =
+SRC_MON  = src/monitor/ecall.asm
 SRC_TEST =
 SRC_MAIN =
 
