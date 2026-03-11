@@ -66,4 +66,26 @@ MAX_IDENT           equ 64
 MAX_RELOCS          equ 4096
 MAX_ERR             equ 256
 
+FORM_R              equ 0
+FORM_I              equ 1
+FORM_S              equ 2
+FORM_B              equ 3
+FORM_U              equ 4
+FORM_J              equ 5
+FORM_ISH            equ 6
+FORM_SYS            equ 7
+FORM_CSR            equ 8
+FORM_PSEUDO         equ 9
+FORM_LOAD           equ 10
+FORM_NONE           equ 11
+
+MNEM_NAME           equ 0
+MNEM_NLEN           equ 8
+MNEM_ID             equ 12
+MNEM_FORM           equ 16
+MNEM_OPC            equ 20
+MNEM_F3             equ 24
+MNEM_F7             equ 28
+MNEM_SIZE           equ 32
+
 %endif
