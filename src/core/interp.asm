@@ -69,7 +69,10 @@ PROC interp_step
         ; x0 hardwire
         mov     qword [rbx + CPU_X], 0
         inc     qword [rbx + CPU_MINSTRET]
+        cmp     dword [rbx + CPU_MODE], MODE_OOO
+        je      .nocyc
         inc     qword [rbx + CPU_MCYCLE]
+.nocyc:
         xor     eax, eax
         cmp     dword [rbx + CPU_HALT], 0
         setne   al
