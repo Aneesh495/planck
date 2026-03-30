@@ -1,0 +1,98 @@
+; tests/test_mem.asm
+        bits 64
+        default rel
+%include "macros.inc"
+%include "cpu.inc"
+%include "rv32.inc"
+%include "abi.inc"
+        extern cpu_create
+        extern cpu_reset
+        extern cpu_set_x
+        extern cpu_get_x
+        extern guest_store_u32
+        extern guest_load_u32
+        extern pack_i
+        extern pack_s
+        extern interp_step
+
+        section .bss
+cpu:    resq 1
+tmp:    resd 1
+
+        section .text
+PROC test_mem
+        push    rbx
+        mov     rdi, DEFAULT_MEM_SIZE
+        xor     esi, esi
+        call    cpu_create
+        mov     [rel cpu], rax
+        call    cpu_reset
+        ; sw x1, 16(x2)  then lw x3, 16(x2)
+        ; x1=0xA1B2C3D4 x2=0x80001000
+        mov     rdi, [rel cpu]
+        call    cpu_reset
+        mov     rdi, [rel cpu]
+        mov     esi, 1
+        mov     edx, 0xA1B2C3D4
+        call    cpu_set_x
+        mov     rdi, [rel cpu]
+        mov     esi, 2
+        mov     edx, 0x80001000
+        call    cpu_set_x
+        ; sw rs2=x1, rs1=x2, imm=16
+        mov     edi, 2                  ; rs1
+        mov     esi, 1                  ; rs2
+        mov     edx, 16
+        xor     ecx, ecx
+        mov     ecx, F3_SW
+        mov     r8d, OPC_STORE
+        call    pack_s
+        mov     rdi, [rel cpu]
+        mov     esi, GUEST_RESET
+        mov     edx, eax
+        call    guest_store_u32
+        mov     rdi, [rel cpu]
+        call    interp_step
+        ; check memory
+        mov     rdi, [rel cpu]
+        mov     esi, 0x80001010
+        lea     rdx, [rel tmp]
+        call    guest_load_u32
+        cmp     dword [rel tmp], 0xA1B2C3D4
+        jne     .fail
+        ; lw x3, 16(x2)
+        mov     rdi, [rel cpu]
+        call    cpu_reset
+        mov     rdi, [rel cpu]
+        mov     esi, 2
+        mov     edx, 0x80001000
+        call    cpu_set_x
+        ; store the data first
+        mov     rdi, [rel cpu]
+        mov     esi, 0x80001010
+        mov     edx, 0xA1B2C3D4
+        call    guest_store_u32
+        mov     edi, 3
+        mov     esi, 2
+        mov     edx, 16
+        mov     ecx, F3_LW
+        mov     r8d, OPC_LOAD
+        call    pack_i
+        mov     rdi, [rel cpu]
+        mov     esi, GUEST_RESET
+        mov     edx, eax
+        call    guest_store_u32
+        mov     rdi, [rel cpu]
+        call    interp_step
+        mov     rdi, [rel cpu]
+        mov     esi, 3
+        call    cpu_get_x
+        cmp     eax, 0xA1B2C3D4
+        jne     .fail
+        xor     eax, eax
+        pop     rbx
+        ret
+.fail:
+        mov     eax, 1
+        pop     rbx
+        ret
