@@ -1,0 +1,24 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: install nasm
+        run: sudo apt-get update && sudo apt-get install -y nasm binutils make
+      - name: build
+        run: make
+      - name: unit tests
+        run: ./bin/planck test
+      - name: exit0
+        run: ./bin/planck run programs/exit0.s
+      - name: fib functional
+        run: ./bin/planck run programs/fib.s
+      - name: fib ooo
+        run: ./bin/planck run --mode ooo --stats programs/fib.s
