@@ -9,7 +9,7 @@ PLANCK_VERSION_PAT  equ 0
 
 ; Default guest RAM and arena slack.
 DEFAULT_MEM_SIZE    equ (64 * 1024 * 1024)
-ARENA_SLACK         equ (4 * 1024 * 1024)
+ARENA_SLACK         equ (32 * 1024 * 1024)
 DEFAULT_ARENA       equ (DEFAULT_MEM_SIZE + ARENA_SLACK)
 
 GUEST_RESET         equ 0x80000000

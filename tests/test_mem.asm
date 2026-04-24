@@ -16,7 +16,7 @@
         extern interp_step
 
         section .bss
-cpu:    resq 1
+hart:    resq 1
 tmp:    resd 1
 
         section .text
@@ -25,17 +25,17 @@ PROC test_mem
         mov     rdi, DEFAULT_MEM_SIZE
         xor     esi, esi
         call    cpu_create
-        mov     [rel cpu], rax
+        mov     [rel hart], rax
         call    cpu_reset
         ; sw x1, 16(x2)  then lw x3, 16(x2)
         ; x1=0xA1B2C3D4 x2=0x80001000
-        mov     rdi, [rel cpu]
+        mov     rdi, [rel hart]
         call    cpu_reset
-        mov     rdi, [rel cpu]
+        mov     rdi, [rel hart]
         mov     esi, 1
         mov     edx, 0xA1B2C3D4
         call    cpu_set_x
-        mov     rdi, [rel cpu]
+        mov     rdi, [rel hart]
         mov     esi, 2
         mov     edx, 0x80001000
         call    cpu_set_x
@@ -47,28 +47,28 @@ PROC test_mem
         mov     ecx, F3_SW
         mov     r8d, OPC_STORE
         call    pack_s
-        mov     rdi, [rel cpu]
+        mov     rdi, [rel hart]
         mov     esi, GUEST_RESET
         mov     edx, eax
         call    guest_store_u32
-        mov     rdi, [rel cpu]
+        mov     rdi, [rel hart]
         call    interp_step
         ; check memory
-        mov     rdi, [rel cpu]
+        mov     rdi, [rel hart]
         mov     esi, 0x80001010
         lea     rdx, [rel tmp]
         call    guest_load_u32
         cmp     dword [rel tmp], 0xA1B2C3D4
         jne     .fail
         ; lw x3, 16(x2)
-        mov     rdi, [rel cpu]
+        mov     rdi, [rel hart]
         call    cpu_reset
-        mov     rdi, [rel cpu]
+        mov     rdi, [rel hart]
         mov     esi, 2
         mov     edx, 0x80001000
         call    cpu_set_x
         ; store the data first
-        mov     rdi, [rel cpu]
+        mov     rdi, [rel hart]
         mov     esi, 0x80001010
         mov     edx, 0xA1B2C3D4
         call    guest_store_u32
@@ -78,13 +78,13 @@ PROC test_mem
         mov     ecx, F3_LW
         mov     r8d, OPC_LOAD
         call    pack_i
-        mov     rdi, [rel cpu]
+        mov     rdi, [rel hart]
         mov     esi, GUEST_RESET
         mov     edx, eax
         call    guest_store_u32
-        mov     rdi, [rel cpu]
+        mov     rdi, [rel hart]
         call    interp_step
-        mov     rdi, [rel cpu]
+        mov     rdi, [rel hart]
         mov     esi, 3
         call    cpu_get_x
         cmp     eax, 0xA1B2C3D4

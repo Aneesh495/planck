@@ -16,7 +16,7 @@ srclen  equ $ - src - 1
         section .bss
 ptr:    resq 1
 len:    resq 1
-cpu:    resq 1
+hart:    resq 1
 
         section .text
 PROC test_programs
@@ -31,14 +31,14 @@ PROC test_programs
         mov     rdi, DEFAULT_MEM_SIZE
         xor     esi, esi
         call    cpu_create
-        mov     [rel cpu], rax
+        mov     [rel hart], rax
         mov     rdi, [rax + CPU_MEM_BASE]
         mov     rsi, [rel ptr]
         mov     rdx, [rel len]
         call    mem_cpy
-        mov     rdi, [rel cpu]
+        mov     rdi, [rel hart]
         call    interp_run
-        mov     rax, [rel cpu]
+        mov     rax, [rel hart]
         cmp     dword [rax + CPU_HALT], HALT_ECALL_EXIT
         jne     .fail
         cmp     dword [rax + CPU_HALT_CODE], 0

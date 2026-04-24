@@ -9,9 +9,9 @@
         extern arena_alloc
 
         section .rodata
-k1:     db "alpha"
-k2:     db "beta"
-k3:     db "gamma"
+key_a:  db "alpha"
+key_b:  db "beta"
+key_c:  db "gamma"
 
         section .bss
 map:    resb HM_SIZE
@@ -24,19 +24,19 @@ PROC test_hash
         mov     esi, 64
         call    hash_init
         lea     rdi, [rel map]
-        lea     rsi, [rel k1]
+        lea     rsi, [rel key_a]
         mov     edx, 5
         mov     ecx, 42
         call    hash_put
         test    eax, eax
         jnz     .fail
         lea     rdi, [rel map]
-        lea     rsi, [rel k2]
+        lea     rsi, [rel key_b]
         mov     edx, 4
         mov     ecx, 99
         call    hash_put
         lea     rdi, [rel map]
-        lea     rsi, [rel k1]
+        lea     rsi, [rel key_a]
         mov     edx, 5
         lea     rcx, [rel val]
         call    hash_get
@@ -45,7 +45,7 @@ PROC test_hash
         cmp     qword [rel val], 42
         jne     .fail
         lea     rdi, [rel map]
-        lea     rsi, [rel k3]
+        lea     rsi, [rel key_c]
         mov     edx, 5
         lea     rcx, [rel val]
         call    hash_get

@@ -12,6 +12,7 @@
         extern sys_close
         extern sys_lseek
         extern sys_read
+        extern sys_write
         extern arena_alloc
         extern host_die
 

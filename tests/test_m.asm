@@ -14,7 +14,7 @@
         extern interp_step
 
         section .bss
-cpu:    resq 1
+hart:    resq 1
 
         section .text
 ; rdi=insn esi=x1 edx=x2 ecx=expect_x3
@@ -27,23 +27,23 @@ runm:
         mov     r13d, esi
         mov     r14d, edx
         mov     ebx, ecx
-        mov     rdi, [rel cpu]
+        mov     rdi, [rel hart]
         call    cpu_reset
-        mov     rdi, [rel cpu]
+        mov     rdi, [rel hart]
         mov     esi, GUEST_RESET
         mov     edx, r12d
         call    guest_store_u32
-        mov     rdi, [rel cpu]
+        mov     rdi, [rel hart]
         mov     esi, 1
         mov     edx, r13d
         call    cpu_set_x
-        mov     rdi, [rel cpu]
+        mov     rdi, [rel hart]
         mov     esi, 2
         mov     edx, r14d
         call    cpu_set_x
-        mov     rdi, [rel cpu]
+        mov     rdi, [rel hart]
         call    interp_step
-        mov     rdi, [rel cpu]
+        mov     rdi, [rel hart]
         mov     esi, 3
         call    cpu_get_x
         cmp     eax, ebx
@@ -61,7 +61,7 @@ PROC test_m
         mov     rdi, DEFAULT_MEM_SIZE
         xor     esi, esi
         call    cpu_create
-        mov     [rel cpu], rax
+        mov     [rel hart], rax
         ; mul x3, x1, x2  6*7=42
         mov     edi, 3
         mov     esi, 1
