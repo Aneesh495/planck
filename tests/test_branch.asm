@@ -15,22 +15,22 @@
         extern interp_step
 
         section .bss
-cpu:    resq 1
+hart:    resq 1
 
         section .text
 PROC test_branch
         mov     rdi, DEFAULT_MEM_SIZE
         xor     esi, esi
         call    cpu_create
-        mov     [rel cpu], rax
+        mov     [rel hart], rax
         ; beq x1, x2, +8  with x1==x2 → pc+8
-        mov     rdi, [rel cpu]
+        mov     rdi, [rel hart]
         call    cpu_reset
-        mov     rdi, [rel cpu]
+        mov     rdi, [rel hart]
         mov     esi, 1
         mov     edx, 9
         call    cpu_set_x
-        mov     rdi, [rel cpu]
+        mov     rdi, [rel hart]
         mov     esi, 2
         mov     edx, 9
         call    cpu_set_x
@@ -42,24 +42,24 @@ PROC test_branch
         xor     ecx, ecx
         mov     r8d, OPC_BRANCH
         call    pack_b
-        mov     rdi, [rel cpu]
+        mov     rdi, [rel hart]
         mov     esi, GUEST_RESET
         mov     edx, eax
         call    guest_store_u32
-        mov     rdi, [rel cpu]
+        mov     rdi, [rel hart]
         call    interp_step
-        mov     rdi, [rel cpu]
+        mov     rdi, [rel hart]
         call    cpu_get_pc
         cmp     eax, GUEST_RESET + 8
         jne     .fail
         ; bne not taken
-        mov     rdi, [rel cpu]
+        mov     rdi, [rel hart]
         call    cpu_reset
-        mov     rdi, [rel cpu]
+        mov     rdi, [rel hart]
         mov     esi, 1
         mov     edx, 9
         call    cpu_set_x
-        mov     rdi, [rel cpu]
+        mov     rdi, [rel hart]
         mov     esi, 2
         mov     edx, 9
         call    cpu_set_x
@@ -69,30 +69,30 @@ PROC test_branch
         mov     ecx, F3_BNE
         mov     r8d, OPC_BRANCH
         call    pack_b
-        mov     rdi, [rel cpu]
+        mov     rdi, [rel hart]
         mov     esi, GUEST_RESET
         mov     edx, eax
         call    guest_store_u32
-        mov     rdi, [rel cpu]
+        mov     rdi, [rel hart]
         call    interp_step
-        mov     rdi, [rel cpu]
+        mov     rdi, [rel hart]
         call    cpu_get_pc
         cmp     eax, GUEST_RESET + 4
         jne     .fail
         ; jal x0, +16
-        mov     rdi, [rel cpu]
+        mov     rdi, [rel hart]
         call    cpu_reset
         xor     edi, edi
         mov     esi, 16
         mov     edx, OPC_JAL
         call    pack_j
-        mov     rdi, [rel cpu]
+        mov     rdi, [rel hart]
         mov     esi, GUEST_RESET
         mov     edx, eax
         call    guest_store_u32
-        mov     rdi, [rel cpu]
+        mov     rdi, [rel hart]
         call    interp_step
-        mov     rdi, [rel cpu]
+        mov     rdi, [rel hart]
         call    cpu_get_pc
         cmp     eax, GUEST_RESET + 16
         jne     .fail

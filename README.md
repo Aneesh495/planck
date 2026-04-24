@@ -81,6 +81,14 @@ make
 ./bin/planck run --mode ooo --stats programs/matmul.s
 ```
 
+On macOS (Apple Silicon or Intel) you can **assemble and link** an ELF64 binary with Homebrew `nasm` and `x86_64-elf-binutils`. You still need Linux to **run** it (Docker, a VM, or CI): the host ABI is Linux syscalls, not Mach.
+
+```bash
+brew install nasm x86_64-elf-binutils
+make                 # uses x86_64-elf-ld automatically on Darwin
+file bin/planck      # ELF 64-bit LSB executable, x86-64
+```
+
 ## CLI
 
 ```

@@ -3,6 +3,10 @@
 
 NASM      ?= nasm
 LD        ?= ld
+UNAME_S   := $(shell uname -s)
+ifeq ($(UNAME_S),Darwin)
+  LD      := x86_64-elf-ld
+endif
 NASMFLAGS ?= -f elf64 -g -F dwarf -I src/include/ -Wall
 LDFLAGS   ?= -static -nostdlib -z noexecstack
 
