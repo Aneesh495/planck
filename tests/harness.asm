@@ -21,6 +21,7 @@
         extern test_asm
         extern test_cache
         extern test_programs
+        extern arena_reset
 
         section .rodata
 t_ok:           db "ok  ",0
@@ -69,41 +70,49 @@ PROC planck_test
         lea     rsi, [rel n_hash]
         call    report
         add     ebx, eax
+        call    arena_reset
         call    test_decode
         mov     edi, eax
         lea     rsi, [rel n_decode]
         call    report
         add     ebx, eax
+        call    arena_reset
         call    test_alu
         mov     edi, eax
         lea     rsi, [rel n_alu]
         call    report
         add     ebx, eax
+        call    arena_reset
         call    test_m
         mov     edi, eax
         lea     rsi, [rel n_m]
         call    report
         add     ebx, eax
+        call    arena_reset
         call    test_mem
         mov     edi, eax
         lea     rsi, [rel n_mem]
         call    report
         add     ebx, eax
+        call    arena_reset
         call    test_branch
         mov     edi, eax
         lea     rsi, [rel n_br]
         call    report
         add     ebx, eax
+        call    arena_reset
         call    test_asm
         mov     edi, eax
         lea     rsi, [rel n_asm]
         call    report
         add     ebx, eax
+        call    arena_reset
         call    test_cache
         mov     edi, eax
         lea     rsi, [rel n_cache]
         call    report
         add     ebx, eax
+        call    arena_reset
         call    test_programs
         mov     edi, eax
         lea     rsi, [rel n_prog]
