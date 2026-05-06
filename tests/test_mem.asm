@@ -26,7 +26,6 @@ PROC test_mem
         xor     esi, esi
         call    cpu_create
         mov     [rel hart], rax
-        call    cpu_reset
         ; sw x1, 16(x2)  then lw x3, 16(x2)
         ; x1=0xA1B2C3D4 x2=0x80001000
         mov     rdi, [rel hart]
