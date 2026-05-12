@@ -225,7 +225,6 @@ PROC lex_next
         mov     eax, TOK_PLUS
         jmp     .out
 .minus_or_num:
-        ; look ahead: if digit, parse negative int
         mov     rdi, rbx
         call    lex_bump                ; consume '-'
         mov     rdi, rbx
@@ -236,10 +235,36 @@ PROC lex_next
         call    is_digit
         test    eax, eax
         jz      .just_minus
-        ; parse int including the minus: back up one
-        dec     dword [rbx + LEX_POS]
-        dec     dword [rbx + LEX_COL]
-        jmp     .number
+        ; parse the unsigned remainder, then negate
+        mov     rax, [rbx + LEX_SRC]
+        mov     ecx, [rbx + LEX_POS]
+        add     rax, rcx
+        mov     r12, rax
+        xor     r8d, r8d
+.mloop:
+        mov     rdi, rbx
+        call    lex_peek
+        cmp     eax, -1
+        je      .mdone
+        mov     edi, eax
+        call    is_ident_cont
+        test    eax, eax
+        jz      .mdone
+        mov     rdi, rbx
+        call    lex_bump
+        inc     r8d
+        jmp     .mloop
+.mdone:
+        mov     rdi, r12
+        mov     esi, r8d
+        lea     rdx, [rbx + LEX_IVAL]
+        call    parse_int
+        test    eax, eax
+        jnz     .error
+        neg     dword [rbx + LEX_IVAL]
+        mov     dword [rbx + LEX_TOK], TOK_INT
+        mov     eax, TOK_INT
+        jmp     .out
 .just_minus:
         mov     dword [rbx + LEX_TOK], TOK_MINUS
         mov     eax, TOK_MINUS
