@@ -310,6 +310,11 @@ cmd_run_fn:
         mov     rdi, [rcx + CPU_MEM_BASE]
         mov     rsi, [rsp+16]
         mov     rdx, [rsp+24]
+        cmp     rdx, DEFAULT_MEM_SIZE
+        jb      .cpy
+        lea     rdi, [rel err_file]
+        call    host_die
+.cpy:
         call    mem_cpy
         mov     rdi, [rel g_cpu]
         cmp     dword [rdi + CPU_MODE], MODE_OOO
