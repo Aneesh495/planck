@@ -246,16 +246,22 @@ resolve_sym:
 
 emit_u8:
         ; edi = byte, LC in asm_st
-        cmp     dword [rel cur_pass], 2
-        jne     .bump
-        mov     rax, [rel img_buf]
         lea     rcx, [rel asm_st]
         mov     edx, [rcx + ASM_LC]
         sub     edx, GUEST_RESET
+        cmp     edx, MAX_SOURCE_BYTES
+        jae     .oob
+        cmp     dword [rel cur_pass], 2
+        jne     .bump
+        mov     rax, [rel img_buf]
         mov     [rax + rdx], dil
 .bump:
         lea     rcx, [rel asm_st]
         inc     dword [rcx + ASM_LC]
+        ret
+.oob:
+        lea     rdi, [rel err_range]
+        call    asm_fail
         ret
 
 emit_u16:
