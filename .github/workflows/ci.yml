@@ -19,6 +19,8 @@ jobs:
       - name: exit0
         run: ./bin/planck run programs/exit0.s
       - name: fib functional
-        run: ./bin/planck run programs/fib.s
+        run: |
+          ./bin/planck asm programs/fib.s
+          ./bin/planck run --dump-regs programs/fib.s
       - name: fib ooo
         run: ./bin/planck run --mode ooo --stats programs/fib.s
