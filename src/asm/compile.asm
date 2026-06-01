@@ -64,6 +64,13 @@ have_look:      resd 1
 cur_pass:       resd 1
 img_buf:        resq 1
 img_cap:        resd 1
+; Operand scratch. SysV caller-saved r8–r11 die across parse_reg /
+; parse_imm / hash_get (reg_lookup even uses r8 as its table index), so
+; decoded rd/rs1/rs2/imm live here until pack_*.
+op_rd:          resd 1
+op_rs1:         resd 1
+op_rs2:         resd 1
+op_imm:         resd 1
 
         section .text
 
@@ -501,35 +508,37 @@ need_comma:
 
 ; parse mem: imm(reg) or (reg)
 parse_mem:
-        ; returns imm in eax, rs1 in r15d
+        ; returns imm in eax / op_imm, rs1 in r15d / op_rs1
         call    next_tok
         cmp     eax, TOK_LPAREN
         je      .noregimm
         call    unget_tok
         call    parse_imm
-        mov     r14d, eax
+        mov     [rel op_imm], eax
         mov     edi, TOK_LPAREN
         call    expect
         call    parse_reg
         mov     r15d, eax
+        mov     [rel op_rs1], eax
         mov     edi, TOK_RPAREN
         call    expect
-        mov     eax, r14d
+        mov     eax, [rel op_imm]
         ret
 .noregimm:
-        xor     r14d, r14d
+        xor     eax, eax
+        mov     [rel op_imm], eax
         call    parse_reg
         mov     r15d, eax
+        mov     [rel op_rs1], eax
         mov     edi, TOK_RPAREN
         call    expect
         xor     eax, eax
         ret
 
 emit_r:
-        ; rd r8d, rs1 r9d, rs2 r10d, use mnem_rec
-        mov     edi, r8d
-        mov     esi, r9d
-        mov     edx, r10d
+        mov     edi, [rel op_rd]
+        mov     esi, [rel op_rs1]
+        mov     edx, [rel op_rs2]
         lea     rax, [rel mnem_rec]
         mov     ecx, [rax + MNEM_F3]
         mov     r8d, [rax + MNEM_F7]
@@ -595,28 +604,26 @@ parse_inst:
 
 .r:
         call    parse_reg
-        mov     r8d, eax
+        mov     [rel op_rd], eax
         call    need_comma
         call    parse_reg
-        mov     r9d, eax
+        mov     [rel op_rs1], eax
         call    need_comma
         call    parse_reg
-        mov     r10d, eax
+        mov     [rel op_rs2], eax
         jmp     emit_r
 
 .i:
         call    parse_reg
-        mov     r8d, eax                ; rd
+        mov     [rel op_rd], eax
         call    need_comma
         call    parse_reg
-        mov     r9d, eax                ; rs1
+        mov     [rel op_rs1], eax
         call    need_comma
         call    parse_imm
-        mov     r10d, eax               ; imm
-        ; pack_i rd, rs1, imm, f3, opc
-        mov     edi, r8d
-        mov     esi, r9d
-        mov     edx, r10d
+        mov     edi, [rel op_rd]
+        mov     esi, [rel op_rs1]
+        mov     edx, eax
         lea     rax, [rel mnem_rec]
         mov     ecx, [rax + MNEM_F3]
         mov     r8d, [rax + MNEM_OPC]
@@ -626,37 +633,33 @@ parse_inst:
 
 .ish:
         call    parse_reg
-        mov     r8d, eax
+        mov     [rel op_rd], eax
         call    need_comma
         call    parse_reg
-        mov     r9d, eax
+        mov     [rel op_rs1], eax
         call    need_comma
         call    parse_imm
         and     eax, 31
-        ; I-type with f7 in high of imm
-        lea     rcx, [rel mnem_rec]
-        mov     edx, [rcx + MNEM_F7]
+        lea     r11, [rel mnem_rec]
+        mov     edx, [r11 + MNEM_F7]
         shl     edx, 5
         or      edx, eax                ; imm[11:0] = f7|shamt
-        mov     edi, r8d
-        mov     esi, r9d
-        mov     ecx, [rcx + MNEM_F3]
-        mov     r8d, [rcx + MNEM_OPC]
+        mov     edi, [rel op_rd]
+        mov     esi, [rel op_rs1]
+        mov     ecx, [r11 + MNEM_F3]
+        mov     r8d, [r11 + MNEM_OPC]
         call    pack_i
         mov     edi, eax
         jmp     emit_u32
 
 .s:
         call    parse_reg
-        mov     r10d, eax               ; rs2
+        mov     [rel op_rs2], eax
         call    need_comma
-        call    parse_mem               ; imm eax, rs1 r15d
-        mov     r9d, r15d
-        mov     r8d, eax                ; imm
-        ; pack_s rs1, rs2, imm, f3, opc
-        mov     edi, r9d
-        mov     esi, r10d
-        mov     edx, r8d
+        call    parse_mem
+        mov     edi, [rel op_rs1]
+        mov     esi, [rel op_rs2]
+        mov     edx, [rel op_imm]
         lea     rax, [rel mnem_rec]
         mov     ecx, [rax + MNEM_F3]
         mov     r8d, [rax + MNEM_OPC]
@@ -666,29 +669,28 @@ parse_inst:
 
 .b:
         call    parse_reg
-        mov     r8d, eax
+        mov     [rel op_rs1], eax
         call    need_comma
         call    parse_reg
-        mov     r9d, eax
+        mov     [rel op_rs2], eax
         call    need_comma
-        call    parse_imm               ; target address or offset? we take symbol as abs addr
-        ; offset = target - pc
+        call    parse_imm               ; symbol is an absolute guest address
         lea     rcx, [rel asm_st]
         mov     edx, [rcx + ASM_LC]
-        sub     eax, edx
-        mov     r10d, eax
+        sub     eax, edx                ; offset = target - pc
+        mov     [rel op_imm], eax
         cmp     dword [rel cur_pass], 1
         je      .bemit
-        mov     edi, r10d
+        mov     edi, eax
         call    fits_b13
         test    eax, eax
         jnz     .bemit
         lea     rdi, [rel err_range]
         call    asm_fail
 .bemit:
-        mov     edi, r8d
-        mov     esi, r9d
-        mov     edx, r10d
+        mov     edi, [rel op_rs1]
+        mov     esi, [rel op_rs2]
+        mov     edx, [rel op_imm]
         lea     rax, [rel mnem_rec]
         mov     ecx, [rax + MNEM_F3]
         mov     r8d, [rax + MNEM_OPC]
@@ -698,12 +700,12 @@ parse_inst:
 
 .u:
         call    parse_reg
-        mov     r8d, eax
+        mov     [rel op_rd], eax
         call    need_comma
         call    parse_imm
         shl     eax, 12                 ; 20-bit field → bits 31:12
         mov     esi, eax
-        mov     edi, r8d
+        mov     edi, [rel op_rd]
         lea     rax, [rel mnem_rec]
         mov     edx, [rax + MNEM_OPC]
         call    pack_u
@@ -711,26 +713,25 @@ parse_inst:
         jmp     emit_u32
 
 .j:
-        ; jal rd, target  OR we always parsed rd
         call    parse_reg
-        mov     r8d, eax
+        mov     [rel op_rd], eax
         call    need_comma
         call    parse_imm
         lea     rcx, [rel asm_st]
         mov     edx, [rcx + ASM_LC]
         sub     eax, edx
-        mov     r10d, eax
+        mov     [rel op_imm], eax
         cmp     dword [rel cur_pass], 1
         je      .jem
-        mov     edi, r10d
+        mov     edi, eax
         call    fits_j21
         test    eax, eax
         jnz     .jem
         lea     rdi, [rel err_range]
         call    asm_fail
 .jem:
-        mov     edi, r8d
-        mov     esi, r10d
+        mov     edi, [rel op_rd]
+        mov     esi, [rel op_imm]
         lea     rax, [rel mnem_rec]
         mov     edx, [rax + MNEM_OPC]
         call    pack_j
@@ -739,14 +740,12 @@ parse_inst:
 
 .load:
         call    parse_reg
-        mov     r8d, eax
+        mov     [rel op_rd], eax
         call    need_comma
         call    parse_mem
-        mov     r10d, eax               ; imm
-        mov     r9d, r15d
-        mov     edi, r8d
-        mov     esi, r9d
-        mov     edx, r10d
+        mov     edi, [rel op_rd]
+        mov     esi, [rel op_rs1]
+        mov     edx, [rel op_imm]
         lea     rax, [rel mnem_rec]
         mov     ecx, [rax + MNEM_F3]
         mov     r8d, [rax + MNEM_OPC]
@@ -756,27 +755,26 @@ parse_inst:
 
 .csr:
         call    parse_reg
-        mov     r8d, eax                ; rd
+        mov     [rel op_rd], eax
         call    need_comma
         call    parse_imm               ; csr number
-        mov     r10d, eax
+        mov     [rel op_imm], eax
         call    need_comma
-        ; rs1 or zimm: register or int
         call    next_tok
         cmp     eax, TOK_INT
         je      .csrimm
         call    unget_tok
         call    parse_reg
-        mov     r9d, eax
+        mov     [rel op_rs1], eax
         jmp     .csrp
 .csrimm:
         lea     rax, [rel lex_st]
-        mov     r9d, [rax + LEX_IVAL]
+        mov     eax, [rax + LEX_IVAL]
+        mov     [rel op_rs1], eax
 .csrp:
-        ; pack_i rd, rs1, csr_imm, f3, opc
-        mov     edi, r8d
-        mov     esi, r9d
-        mov     edx, r10d
+        mov     edi, [rel op_rd]
+        mov     esi, [rel op_rs1]
+        mov     edx, [rel op_imm]
         lea     rax, [rel mnem_rec]
         mov     ecx, [rax + MNEM_F3]
         mov     r8d, [rax + MNEM_OPC]
@@ -969,11 +967,11 @@ ps_nop:
 
 ps_mv:
         call    parse_reg
-        mov     r8d, eax
+        mov     [rel op_rd], eax
         call    need_comma
         call    parse_reg
         mov     esi, eax
-        mov     edi, r8d
+        mov     edi, [rel op_rd]
         xor     edx, edx
         xor     ecx, ecx
         mov     r8d, OPC_OP_IMM
@@ -981,11 +979,11 @@ ps_mv:
 
 ps_not:
         call    parse_reg
-        mov     r8d, eax
+        mov     [rel op_rd], eax
         call    need_comma
         call    parse_reg
         mov     esi, eax
-        mov     edi, r8d
+        mov     edi, [rel op_rd]
         mov     edx, -1
         mov     ecx, F3_XORI
         mov     r8d, OPC_OP_IMM
@@ -993,14 +991,13 @@ ps_not:
 
 ps_neg:
         call    parse_reg
-        mov     r8d, eax
+        mov     [rel op_rd], eax
         call    need_comma
         call    parse_reg
-        ; sub rd, x0, rs
-        mov     r10d, eax
-        mov     edi, r8d
+        mov     [rel op_rs2], eax
+        mov     edi, [rel op_rd]
         xor     esi, esi
-        mov     edx, r10d
+        mov     edx, [rel op_rs2]
         xor     ecx, ecx
         mov     r8d, F7_SUB
         mov     r9d, OPC_OP
@@ -1049,12 +1046,12 @@ ps_call:
 
 ps_beqz:
         call    parse_reg
-        mov     r8d, eax
+        mov     [rel op_rs1], eax
         call    need_comma
         call    parse_imm
         lea     rcx, [rel asm_st]
         sub     eax, [rcx + ASM_LC]
-        mov     edi, r8d
+        mov     edi, [rel op_rs1]
         xor     esi, esi
         mov     edx, eax
         xor     ecx, ecx
@@ -1065,12 +1062,12 @@ ps_beqz:
 
 ps_bnez:
         call    parse_reg
-        mov     r8d, eax
+        mov     [rel op_rs1], eax
         call    need_comma
         call    parse_imm
         lea     rcx, [rel asm_st]
         sub     eax, [rcx + ASM_LC]
-        mov     edi, r8d
+        mov     edi, [rel op_rs1]
         xor     esi, esi
         mov     edx, eax
         mov     ecx, F3_BNE
@@ -1081,12 +1078,12 @@ ps_bnez:
 
 ps_bltz:
         call    parse_reg
-        mov     r8d, eax
+        mov     [rel op_rs1], eax
         call    need_comma
         call    parse_imm
         lea     rcx, [rel asm_st]
         sub     eax, [rcx + ASM_LC]
-        mov     edi, r8d
+        mov     edi, [rel op_rs1]
         xor     esi, esi
         mov     edx, eax
         mov     ecx, F3_BLT
@@ -1097,12 +1094,12 @@ ps_bltz:
 
 ps_bgez:
         call    parse_reg
-        mov     r8d, eax
+        mov     [rel op_rs1], eax
         call    need_comma
         call    parse_imm
         lea     rcx, [rel asm_st]
         sub     eax, [rcx + ASM_LC]
-        mov     edi, r8d
+        mov     edi, [rel op_rs1]
         xor     esi, esi
         mov     edx, eax
         mov     ecx, F3_BGE
@@ -1113,13 +1110,13 @@ ps_bgez:
 
 ps_blez:
         call    parse_reg
-        mov     r8d, eax
+        mov     [rel op_rs1], eax
         call    need_comma
         call    parse_imm
         lea     rcx, [rel asm_st]
         sub     eax, [rcx + ASM_LC]
         xor     edi, edi                ; rs1 = x0
-        mov     esi, r8d                ; rs2 = rs
+        mov     esi, [rel op_rs1]
         mov     edx, eax
         mov     ecx, F3_BGE
         mov     r8d, OPC_BRANCH
@@ -1129,13 +1126,13 @@ ps_blez:
 
 ps_bgtz:
         call    parse_reg
-        mov     r8d, eax
+        mov     [rel op_rs1], eax
         call    need_comma
         call    parse_imm
         lea     rcx, [rel asm_st]
         sub     eax, [rcx + ASM_LC]
         xor     edi, edi
-        mov     esi, r8d
+        mov     esi, [rel op_rs1]
         mov     edx, eax
         mov     ecx, F3_BLT
         mov     r8d, OPC_BRANCH
@@ -1145,16 +1142,16 @@ ps_bgtz:
 
 ps_ble:
         call    parse_reg
-        mov     r8d, eax                ; a
+        mov     [rel op_rs1], eax        ; a
         call    need_comma
         call    parse_reg
-        mov     r9d, eax                ; b
+        mov     [rel op_rs2], eax        ; b
         call    need_comma
         call    parse_imm
         lea     rcx, [rel asm_st]
         sub     eax, [rcx + ASM_LC]
-        mov     edi, r9d                ; bge b, a
-        mov     esi, r8d
+        mov     edi, [rel op_rs2]        ; bge b, a
+        mov     esi, [rel op_rs1]
         mov     edx, eax
         mov     ecx, F3_BGE
         mov     r8d, OPC_BRANCH
@@ -1164,16 +1161,16 @@ ps_ble:
 
 ps_bgt:
         call    parse_reg
-        mov     r8d, eax
+        mov     [rel op_rs1], eax
         call    need_comma
         call    parse_reg
-        mov     r9d, eax
+        mov     [rel op_rs2], eax
         call    need_comma
         call    parse_imm
         lea     rcx, [rel asm_st]
         sub     eax, [rcx + ASM_LC]
-        mov     edi, r9d                ; blt b, a
-        mov     esi, r8d
+        mov     edi, [rel op_rs2]        ; blt b, a
+        mov     esi, [rel op_rs1]
         mov     edx, eax
         mov     ecx, F3_BLT
         mov     r8d, OPC_BRANCH
