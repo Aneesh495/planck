@@ -5,9 +5,19 @@
 %include "rv32.inc"
         extern asm_compile
         extern pack_i
+        extern pack_r
+        extern pack_b
 
         section .rodata
-src:    db "addi x1, x0, 5",10,"addi x2, x0, 7",10,0
+; 7 instructions, 28 bytes. ABI names on add/mv/bge catch r8 clobber.
+src:    db "addi x1, x0, 5",10
+        db "add t4, t0, t1",10
+        db "mv t0, t1",10
+        db "slli x3, x4, 3",10
+        db "bge t2, t3, t",10
+        db "nop",10
+        db "t:",10
+        db "nop",10,0
 srclen  equ $ - src - 1
 
         section .bss
@@ -16,6 +26,7 @@ len:    resq 1
 
         section .text
 PROC test_asm
+        push    rbx
         lea     rdi, [rel src]
         mov     esi, srclen
         xor     edx, edx
@@ -24,20 +35,65 @@ PROC test_asm
         call    asm_compile
         test    eax, eax
         jnz     .fail
-        cmp     qword [rel len], 8
+        cmp     qword [rel len], 28
         jne     .fail
-        ; first insn addi x1, x0, 5
+        mov     rbx, [rel ptr]
+
+        ; addi x1, x0, 5
         mov     edi, 1
         xor     esi, esi
         mov     edx, 5
         xor     ecx, ecx
         mov     r8d, OPC_OP_IMM
         call    pack_i
-        mov     rcx, [rel ptr]
-        cmp     [rcx], eax
+        cmp     [rbx], eax
         jne     .fail
+
+        ; add t4, t0, t1  → add x29, x5, x6
+        mov     edi, 29
+        mov     esi, 5
+        mov     edx, 6
+        xor     ecx, ecx
+        xor     r8d, r8d
+        mov     r9d, OPC_OP
+        call    pack_r
+        cmp     [rbx + 4], eax
+        jne     .fail
+
+        ; mv t0, t1 → addi x5, x6, 0
+        mov     edi, 5
+        mov     esi, 6
+        xor     edx, edx
+        xor     ecx, ecx
+        mov     r8d, OPC_OP_IMM
+        call    pack_i
+        cmp     [rbx + 8], eax
+        jne     .fail
+
+        ; slli x3, x4, 3  → I-type imm = shamt
+        mov     edi, 3
+        mov     esi, 4
+        mov     edx, 3
+        mov     ecx, F3_SLLI
+        mov     r8d, OPC_OP_IMM
+        call    pack_i
+        cmp     [rbx + 12], eax
+        jne     .fail
+
+        ; bge t2, t3, t  at 0x80000010, t at 0x80000018, off = 8
+        mov     edi, 7
+        mov     esi, 28
+        mov     edx, 8
+        mov     ecx, F3_BGE
+        mov     r8d, OPC_BRANCH
+        call    pack_b
+        cmp     [rbx + 16], eax
+        jne     .fail
+
         xor     eax, eax
+        pop     rbx
         ret
 .fail:
         mov     eax, 1
+        pop     rbx
         ret
