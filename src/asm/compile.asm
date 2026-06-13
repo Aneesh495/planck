@@ -854,6 +854,34 @@ pseudo_dispatch:
         call    str_eq_n
         test    eax, eax
         jnz     ps_neg
+        lea     rdi, [rel ncmp_seqz]
+        mov     esi, 4
+        mov     rdx, r12
+        mov     ecx, r13d
+        call    str_eq_n
+        test    eax, eax
+        jnz     ps_seqz
+        lea     rdi, [rel ncmp_snez]
+        mov     esi, 4
+        mov     rdx, r12
+        mov     ecx, r13d
+        call    str_eq_n
+        test    eax, eax
+        jnz     ps_snez
+        lea     rdi, [rel ncmp_sltz]
+        mov     esi, 4
+        mov     rdx, r12
+        mov     ecx, r13d
+        call    str_eq_n
+        test    eax, eax
+        jnz     ps_sltz
+        lea     rdi, [rel ncmp_sgtz]
+        mov     esi, 4
+        mov     rdx, r12
+        mov     ecx, r13d
+        call    str_eq_n
+        test    eax, eax
+        jnz     ps_sgtz
         lea     rdi, [rel ncmp_beqz]
         mov     esi, 4
         mov     rdx, r12
@@ -882,6 +910,20 @@ pseudo_dispatch:
         call    str_eq_n
         test    eax, eax
         jnz     ps_bgt
+        lea     rdi, [rel ncmp_bgtu]
+        mov     esi, 4
+        mov     rdx, r12
+        mov     ecx, r13d
+        call    str_eq_n
+        test    eax, eax
+        jnz     ps_bgtu
+        lea     rdi, [rel ncmp_bleu]
+        mov     esi, 4
+        mov     rdx, r12
+        mov     ecx, r13d
+        call    str_eq_n
+        test    eax, eax
+        jnz     ps_bleu
         lea     rdi, [rel ncmp_bltz]
         mov     esi, 4
         mov     rdx, r12
@@ -917,6 +959,13 @@ pseudo_dispatch:
         call    str_eq_n
         test    eax, eax
         jnz     ps_call
+        lea     rdi, [rel ncmp_tail]
+        mov     esi, 4
+        mov     rdx, r12
+        mov     ecx, r13d
+        call    str_eq_n
+        test    eax, eax
+        jnz     ps_j                    ; near tail is jal x0, lab
         lea     rdi, [rel ncmp_la]
         mov     esi, 2
         mov     rdx, r12
@@ -947,7 +996,14 @@ ncmp_bgez:      db "bgez"
 ncmp_blez:      db "blez"
 ncmp_bgtz:      db "bgtz"
 ncmp_call:      db "call"
+ncmp_tail:      db "tail"
 ncmp_la:        db "la"
+ncmp_seqz:      db "seqz"
+ncmp_snez:      db "snez"
+ncmp_sltz:      db "sltz"
+ncmp_sgtz:      db "sgtz"
+ncmp_bgtu:      db "bgtu"
+ncmp_bleu:      db "bleu"
 
         section .text
 
@@ -1175,6 +1231,104 @@ ps_bgt:
         mov     ecx, F3_BLT
         mov     r8d, OPC_BRANCH
         call    pack_b
+        mov     edi, eax
+        jmp     emit_u32
+
+ps_bgtu:
+        call    parse_reg
+        mov     [rel op_rs1], eax
+        call    need_comma
+        call    parse_reg
+        mov     [rel op_rs2], eax
+        call    need_comma
+        call    parse_imm
+        lea     rcx, [rel asm_st]
+        sub     eax, [rcx + ASM_LC]
+        mov     edi, [rel op_rs2]
+        mov     esi, [rel op_rs1]
+        mov     edx, eax
+        mov     ecx, F3_BLTU
+        mov     r8d, OPC_BRANCH
+        call    pack_b
+        mov     edi, eax
+        jmp     emit_u32
+
+ps_bleu:
+        call    parse_reg
+        mov     [rel op_rs1], eax
+        call    need_comma
+        call    parse_reg
+        mov     [rel op_rs2], eax
+        call    need_comma
+        call    parse_imm
+        lea     rcx, [rel asm_st]
+        sub     eax, [rcx + ASM_LC]
+        mov     edi, [rel op_rs2]
+        mov     esi, [rel op_rs1]
+        mov     edx, eax
+        mov     ecx, F3_BGEU
+        mov     r8d, OPC_BRANCH
+        call    pack_b
+        mov     edi, eax
+        jmp     emit_u32
+
+ps_seqz:
+        call    parse_reg
+        mov     [rel op_rd], eax
+        call    need_comma
+        call    parse_reg
+        mov     esi, eax
+        mov     edi, [rel op_rd]
+        mov     edx, 1
+        mov     ecx, F3_SLTIU
+        mov     r8d, OPC_OP_IMM
+        jmp     emit_i_fixed
+
+ps_snez:
+        call    parse_reg
+        mov     [rel op_rd], eax
+        call    need_comma
+        call    parse_reg
+        mov     [rel op_rs2], eax
+        mov     edi, [rel op_rd]
+        xor     esi, esi
+        mov     edx, [rel op_rs2]
+        mov     ecx, F3_SLTU
+        xor     r8d, r8d
+        mov     r9d, OPC_OP
+        call    pack_r
+        mov     edi, eax
+        jmp     emit_u32
+
+ps_sltz:
+        call    parse_reg
+        mov     [rel op_rd], eax
+        call    need_comma
+        call    parse_reg
+        mov     [rel op_rs1], eax
+        mov     edi, [rel op_rd]
+        mov     esi, [rel op_rs1]
+        xor     edx, edx
+        mov     ecx, F3_SLT
+        xor     r8d, r8d
+        mov     r9d, OPC_OP
+        call    pack_r
+        mov     edi, eax
+        jmp     emit_u32
+
+ps_sgtz:
+        call    parse_reg
+        mov     [rel op_rd], eax
+        call    need_comma
+        call    parse_reg
+        mov     [rel op_rs2], eax
+        mov     edi, [rel op_rd]
+        xor     esi, esi
+        mov     edx, [rel op_rs2]
+        mov     ecx, F3_SLT
+        xor     r8d, r8d
+        mov     r9d, OPC_OP
+        call    pack_r
         mov     edi, eax
         jmp     emit_u32
 
