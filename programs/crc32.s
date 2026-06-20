@@ -43,4 +43,4 @@ msg:
         .ascii  "hello, planck!"
         .align  2
 expect:
-        .word   0                       # filled after first golden run if needed; test may skip
+        .word   0xdb2efe73
