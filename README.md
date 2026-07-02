@@ -63,7 +63,7 @@ docker build --platform linux/amd64 -t planck .
 docker run --rm --platform linux/amd64 planck run /opt/planck/programs/fib.s
 
 # cycle-accurate out-of-order run with a stats dump
-docker run --rm --platform linux/amd64 planck run --mode ooo --stats /opt/planck/programs/qsort.s
+docker run --rm --platform linux/amd64 planck run --mode ooo --stats /opt/planck/programs/matmul.s
 
 # in-tree verification
 docker run --rm --platform linux/amd64 planck test
@@ -146,7 +146,7 @@ flowchart LR
   FUN --> MON
 ```
 
-Deeper diagrams and invariants live in [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md). The ISA contract is [`docs/ISA.md`](docs/ISA.md). The OoO pipeline is [`docs/MICROARCHITECTURE.md`](docs/MICROARCHITECTURE.md). The memory system is [`docs/MEMORY.md`](docs/MEMORY.md). The assembler grammar is [`docs/ASSEMBLER.md`](docs/ASSEMBLER.md).
+Deeper diagrams and invariants live in [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md). The ISA contract is [`docs/ISA.md`](docs/ISA.md). Bit packing is [`docs/ENCODING.md`](docs/ENCODING.md). The OoO pipeline is [`docs/MICROARCHITECTURE.md`](docs/MICROARCHITECTURE.md). The memory system is [`docs/MEMORY.md`](docs/MEMORY.md). The assembler grammar is [`docs/ASSEMBLER.md`](docs/ASSEMBLER.md). Guest programs are [`docs/PROGRAMS.md`](docs/PROGRAMS.md).
 
 ## Module map
 
@@ -159,10 +159,10 @@ src/
   disasm/      printer
   cache/       L1I, L1D, L2, TLB
   predict/     bimodal, gshare, tournament, BTB, RAS
-  ooo/         rename, ROB, RS, FUs, LSU, pipeline tick
+  ooo/         rename, ROB, RS, FUs, pipeline tick
   stats/       counters, host rdtsc histogram, report
   monitor/     ecall ABI, image loader
-programs/      guest RISC-V: fib, qsort, memcpy, matmul, crc32, dhrystone-ish
+programs/      guest RISC-V: fib, fact, memcpy, isort, matmul, crc32, …
 tests/         assembly unit + integration tests
 ```
 
@@ -209,7 +209,9 @@ IPC is `minstret / mcycle` as the core counted it, not as the host wall clock sa
 | [docs/MICROARCHITECTURE.md](docs/MICROARCHITECTURE.md) | Rename, ROB, RS, LSU, recovery |
 | [docs/MEMORY.md](docs/MEMORY.md) | Caches, TLB, miss status, inclusion |
 | [docs/PREDICTION.md](docs/PREDICTION.md) | Tournament predictor, BTB, RAS |
-| [docs/ASSEMBLER.md](docs/ASSEMBLER.md) | Grammar, pseudos, relocation |
+| [docs/ASSEMBLER.md](docs/ASSEMBLER.md) | Grammar, pseudos, relocation, SysV operand stash |
+| [docs/ENCODING.md](docs/ENCODING.md) | RV32 bit layouts, `pack_*`, `li`/`la` |
+| [docs/PROGRAMS.md](docs/PROGRAMS.md) | Guest suite and how to add one |
 | [docs/HOST.md](docs/HOST.md) | Syscalls, arena, formatting, hashmap |
 | [docs/VERIFICATION.md](docs/VERIFICATION.md) | Test philosophy, golden model |
 | [docs/LAYOUT.md](docs/LAYOUT.md) | Byte offsets of every struct (the ABI between `.asm` files) |
@@ -233,11 +235,12 @@ make lines      # count instruction and source lines
 
 ## What I would ask a reviewer to look at
 
-If you only open three files, make them:
+If you only open a handful of files, make them:
 
 1. `src/ooo/pipeline.asm` — one cycle of the machine, in order, with the stall reasons.
-2. `src/ooo/lsu.asm` — store buffer search, load replay, the thing everyone under-specifies.
-3. `src/asm/encode.asm` — the ISA as a table, not a switch-statement novel.
+2. `src/ooo/fu.asm` — combinational ALU/branch/M eval used by the timing model.
+3. `src/asm/compile.asm` — two-pass parse/encode, BSS operand stash, pseudo expansions.
+4. `src/asm/tables.asm` — the ISA as a mnemonic table, not a switch-statement novel.
 
 Then `docs/MICROARCHITECTURE.md` for the invariants those files are supposed to keep.
 

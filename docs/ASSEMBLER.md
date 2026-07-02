@@ -57,7 +57,7 @@ Loads/stores accept `imm(rs1)` with optional spaces: `lw a0, 16(sp)`.
 
 Branches: `beq a0, a1, label`. The immediate is PC-relative and must fit a 13-bit signed offset with the implicit zero LSB (`±4 KiB`).
 
-`jal rd, label` / `jal label` (`rd` defaults to `ra`). J-type ±1 MiB.
+`jal rd, label`. J-type ±1 MiB. One-operand jumps are the pseudos `j` (`rd = x0`) and `call` (`rd = ra`).
 
 ## Pseudoinstructions
 
@@ -83,14 +83,12 @@ Branches: `beq a0, a1, label`. The immediate is PC-relative and must fit a 13-bi
 | `bgtu a,b,l` | `bltu b, a, l` |
 | `bleu a,b,l` | `bgeu b, a, l` |
 | `j lab` | `jal x0, lab` |
-| `jal lab` | `jal ra, lab` |
+| `jal rd, lab` | J-type; **rd is required** (`call lab` / `j lab` are the one-operand forms) |
 | `jr rs` | `jalr x0, 0(rs)` |
 | `ret` | `jalr x0, 0(ra)` |
-| `call lab` | `auipc ra, hi` + `jalr ra, lo(ra)` if out of J range, else `jal ra, lab` |
-| `tail lab` | same with `x0` / `t1` as the linker usually would; we use `t1` for far tails |
+| `call lab` | near `jal ra, lab` (must fit ±1 MiB) |
+| `tail lab` | near `jal x0, lab` |
 | `la rd, lab` | `auipc rd, hi` + `addi rd, rd, lo` |
-| `lw rd, lab` | `auipc + lw` with hi/lo |
-| `sw rs, lab, tmp` | `auipc tmp, hi` + `sw rs, lo(tmp)` — tmp required |
 | `fence` | `fence iorw, iorw` encoded as the I-type NOP-shaped fence |
 
 `li` is the one everyone gets wrong. Planck uses the canonical:
@@ -103,6 +101,19 @@ addi rd, rd, lo           ; omitted if lo == 0 and we already lui'd, or just add
 ```
 
 If the whole immediate fits in 12 bits, a single `addi rd, x0, imm`.
+
+## Operand scratch (SysV)
+
+The assembler is a forest of `call`s (`parse_reg` → `reg_lookup` → `ieq_n`, `parse_imm` → `hash_get`). Under the SysV AMD64 ABI, `rax rcx rdx rsi rdi r8–r11` are caller-saved.
+
+Two concrete clobbers that ate a week:
+
+- `reg_lookup` uses **`r8` as the register-table index**. After `add t4, t0, t1` the last lookup leaves `r8 = index(t1)`, not `rd = 29`.
+- `hash_get` loads a slot pointer into **`r8`**, so a branch `bge t2, t3, done` that resolves `done` after stashing rs1/rs2 in `r8`/`r9` encodes garbage register fields and a nonsense displacement.
+
+Decoded operands live in BSS `op_rd`, `op_rs1`, `op_rs2`, `op_imm` until `pack_*`. Callee-saved `r12`/`r13` are used only for `li`/`la`, which already survived because those functions push them.
+
+See [`ENCODING.md`](ENCODING.md) for the bit layouts and the encode-path diagram.
 
 ## Relocations
 
