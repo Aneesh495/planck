@@ -141,3 +141,30 @@ flowchart TD
   O --> BTB[write target / kind]
   BR --> RAS[push or pop already done at dispatch; squash repairs]
 ```
+
+## Assembler encode (where operands live)
+
+```mermaid
+flowchart LR
+  P[parse_reg / parse_imm] --> BSS["BSS op_rd op_rs1 op_rs2 op_imm"]
+  BSS --> PK[pack_r/i/s/b/u/j]
+  PK --> MEM[img_buf little-endian]
+  subgraph clobber["do not stash here"]
+    R8[r8 = reg_lookup index]
+    H[r8 = hash_get slot]
+  end
+  P -.-> clobber
+```
+
+`add t4, t0, t1` must pack `rd=29, rs1=5, rs2=6`. If `rd` is left in `r8` across the last `parse_reg`, it becomes `6` and the guest sees `add t1, t0, t1` — or, worse, an illegal encoding.
+
+## Guest program map
+
+```mermaid
+flowchart TB
+  RST[0x80000000 reset] --> T[text: programs/*.s]
+  T --> D[.word / .ascii / .space]
+  T --> SP[sp = mem_top - 16]
+  T --> E[ecall a7=0 → host exit a0]
+```
+

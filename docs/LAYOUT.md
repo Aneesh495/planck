@@ -45,7 +45,13 @@ All offsets are decimal. Pointers are 8 bytes. Guest values stored in qwords are
 | 492 | 4 | `pad2` |
 | 496 | 8 | `squash_pc` |
 | 504 | 8 | `entry_pc` |
-| 512 | | `CPU_SIZE` (rounded to 64) |
+| 512 | 8 | `max_inst` |
+| 520 | 8 | `max_cycle` |
+| 528 | 4 | `flags` (trace / stats / dump_regs) |
+| 532 | 4 | pad |
+| 536 | 4 | `trace_len` |
+| 540 | 4 | `trace_cap` |
+| 576 | | `CPU_SIZE` |
 
 `x0` lives at offset 0 and is rewritten to 0 after every writeback helper.
 

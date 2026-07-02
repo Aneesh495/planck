@@ -147,8 +147,8 @@ flowchart TB
 
   subgraph Front
     lex[asm/lexer.asm]
-    parse[asm/parse.asm]
-    enc[asm/encode.asm]
+    tables[asm/tables.asm]
+    compile[asm/compile.asm]
   end
 
   subgraph Cores
@@ -159,13 +159,15 @@ flowchart TB
   end
 
   start --> arena
-  start --> lex --> parse --> enc
-  enc --> interp
-  enc --> pipe
+  start --> lex --> tables
+  lex --> compile
+  tables --> compile
+  compile --> interp
+  compile --> pipe
   interp --> dec --> ex
   pipe --> dec
   start --> io
-  parse --> hash
+  compile --> hash
 ```
 
 The assembler never calls the interpreter. The interpreter never calls the assembler. They share `cpu.mem_base` and the decode table in `include/rv32.inc`. That decode table is the ISA contract; `docs/ISA.md` is the prose version of the same numbers.
