@@ -22,12 +22,12 @@ jobs:
         run: ./bin/planck run programs/fib.s
       - name: fib ooo
         run: ./bin/planck run --mode ooo --stats programs/fib.s
-      - name: fib recursive
-        run: ./bin/planck run programs/fib_rec.s
       - name: fact
         run: ./bin/planck run programs/fact.s
       - name: memcpy
         run: ./bin/planck run programs/memcpy.s
+      - name: callret
+        run: ./bin/planck run programs/callret.s
       - name: isort
         run: ./bin/planck run programs/isort.s
       - name: matmul
@@ -36,3 +36,7 @@ jobs:
         run: ./bin/planck run programs/branchy.s
       - name: crc32
         run: ./bin/planck run programs/crc32.s
+      - name: fib recursive
+        run: |
+          ./bin/planck asm programs/fib_rec.s
+          ./bin/planck run --dump-regs programs/fib_rec.s
