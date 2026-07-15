@@ -24,8 +24,16 @@ jobs:
         run: ./bin/planck run --mode ooo --stats programs/fib.s
       - name: fact
         run: ./bin/planck run programs/fact.s
+      - name: memsmoke
+        run: ./bin/planck run programs/memsmoke.s
+      - name: lasmoke
+        run: |
+          ./bin/planck asm programs/lasmoke.s
+          ./bin/planck run --dump-regs programs/lasmoke.s
       - name: memcpy
-        run: ./bin/planck run programs/memcpy.s
+        run: |
+          ./bin/planck asm programs/memcpy.s
+          ./bin/planck run --dump-regs programs/memcpy.s
       - name: callret
         run: ./bin/planck run programs/callret.s
       - name: isort
