@@ -22,6 +22,7 @@ tmp:    resd 1
         section .text
 PROC test_mem
         push    rbx
+        push    r12
         mov     rdi, DEFAULT_MEM_SIZE
         xor     esi, esi
         call    cpu_create
@@ -88,10 +89,33 @@ PROC test_mem
         call    cpu_get_x
         cmp     eax, 0xA1B2C3D4
         jne     .fail
+        ; store/load at the reset stack pointer (high end of guest RAM)
+        mov     rdi, [rel hart]
+        call    cpu_reset
+        mov     rdi, [rel hart]
+        mov     esi, 2
+        call    cpu_get_x
+        mov     r12d, eax               ; sp
+        mov     rdi, [rel hart]
+        mov     esi, r12d
+        mov     edx, 0xAABBCCDD
+        call    guest_store_u32
+        test    eax, eax
+        jnz     .fail
+        mov     rdi, [rel hart]
+        mov     esi, r12d
+        lea     rdx, [rel tmp]
+        call    guest_load_u32
+        test    eax, eax
+        jnz     .fail
+        cmp     dword [rel tmp], 0xAABBCCDD
+        jne     .fail
         xor     eax, eax
+        pop     r12
         pop     rbx
         ret
 .fail:
         mov     eax, 1
+        pop     r12
         pop     rbx
         ret

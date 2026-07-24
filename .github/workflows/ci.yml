@@ -25,7 +25,9 @@ jobs:
       - name: fact
         run: ./bin/planck run programs/fact.s
       - name: memsmoke
-        run: ./bin/planck run programs/memsmoke.s
+        run: |
+          ./bin/planck asm programs/memsmoke.s
+          ./bin/planck run --dump-regs programs/memsmoke.s
       - name: lasmoke
         run: |
           ./bin/planck asm programs/lasmoke.s
