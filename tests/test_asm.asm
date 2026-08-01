@@ -7,6 +7,7 @@
         extern pack_i
         extern pack_r
         extern pack_b
+        extern pack_s
 
         section .rodata
 ; 7 instructions, 28 bytes. ABI names on add/mv/bge catch r8 clobber.
@@ -17,7 +18,9 @@ src:    db "addi x1, x0, 5",10
         db "bge t2, t3, t",10
         db "nop",10
         db "t:",10
-        db "nop",10,0
+        db "nop",10
+        db "sw x0, 0(x2)",10
+        db "lw x10, 0(x2)",10,0
 srclen  equ $ - src - 1
 
         section .bss
@@ -35,7 +38,7 @@ PROC test_asm
         call    asm_compile
         test    eax, eax
         jnz     .fail
-        cmp     qword [rel len], 28
+        cmp     qword [rel len], 36
         jne     .fail
         mov     rbx, [rel ptr]
 
@@ -88,6 +91,26 @@ PROC test_asm
         mov     r8d, OPC_BRANCH
         call    pack_b
         cmp     [rbx + 16], eax
+        jne     .fail
+
+        ; sw x0, 0(x2)
+        mov     edi, 2                  ; rs1
+        xor     esi, esi                ; rs2
+        xor     edx, edx                ; imm
+        mov     ecx, F3_SW
+        mov     r8d, OPC_STORE
+        call    pack_s
+        cmp     [rbx + 28], eax
+        jne     .fail
+
+        ; lw x10, 0(x2)
+        mov     edi, 10
+        mov     esi, 2
+        xor     edx, edx
+        mov     ecx, F3_LW
+        mov     r8d, OPC_LOAD
+        call    pack_i
+        cmp     [rbx + 32], eax
         jne     .fail
 
         xor     eax, eax
