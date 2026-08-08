@@ -71,6 +71,8 @@ op_rd:          resd 1
 op_rs1:         resd 1
 op_rs2:         resd 1
 op_imm:         resd 1
+asm_outp:       resq 1
+asm_lenp:       resq 1
 
         section .text
 
@@ -508,7 +510,7 @@ need_comma:
 
 ; parse mem: imm(reg) or (reg)
 parse_mem:
-        ; returns imm in eax / op_imm, rs1 in r15d / op_rs1
+        ; returns imm in eax / op_imm, rs1 in op_rs1
         call    next_tok
         cmp     eax, TOK_LPAREN
         je      .noregimm
@@ -518,7 +520,6 @@ parse_mem:
         mov     edi, TOK_LPAREN
         call    expect
         call    parse_reg
-        mov     r15d, eax
         mov     [rel op_rs1], eax
         mov     edi, TOK_RPAREN
         call    expect
@@ -528,7 +529,6 @@ parse_mem:
         xor     eax, eax
         mov     [rel op_imm], eax
         call    parse_reg
-        mov     r15d, eax
         mov     [rel op_rs1], eax
         mov     edi, TOK_RPAREN
         call    expect
@@ -1672,8 +1672,8 @@ PROC asm_compile
         push    r15
         mov     r12, rdi                ; src
         mov     r13, rsi                ; len
-        mov     r14, rcx                ; **out
-        mov     r15, r8                 ; *outlen
+        mov     [rel asm_outp], rcx
+        mov     [rel asm_lenp], r8
         ; path in rdx
         push    rdx
         lea     rdi, [rel hash_syms]
@@ -1696,11 +1696,13 @@ PROC asm_compile
         mov     edi, 2
         call    run_pass
         mov     rax, [rel img_buf]
-        mov     [r14], rax
-        lea     rcx, [rel asm_st]
-        mov     eax, [rcx + ASM_LC]
+        mov     rcx, [rel asm_outp]
+        mov     [rcx], rax
+        lea     rdx, [rel asm_st]
+        mov     eax, [rdx + ASM_LC]
         sub     eax, GUEST_RESET
-        mov     [r15], rax
+        mov     rcx, [rel asm_lenp]
+        mov     [rcx], rax
         xor     eax, eax
         pop     r15
         pop     r14
