@@ -113,6 +113,8 @@ Two concrete clobbers that ate a week:
 
 Decoded operands live in BSS `op_rd`, `op_rs1`, `op_rs2`, `op_imm` until `pack_*`. Callee-saved `r12`/`r13` are used only for `li`/`la`, which already survived because those functions push them.
 
+`asm_compile`'s `void **out` and `uint64 *outlen` also cannot live in `r14`/`r15` across a pass: `parse_mem` and `.ascii` use those as scratch, and the post-pass `mov [r15], length` was a store to address `2` (that is, `rs1 = x2`) on any load or store. The pointers sit in BSS `asm_outp` / `asm_lenp`.
+
 See [`ENCODING.md`](ENCODING.md) for the bit layouts and the encode-path diagram.
 
 ## Relocations

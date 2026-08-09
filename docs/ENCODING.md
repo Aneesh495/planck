@@ -47,6 +47,8 @@ Anything else, or an illegal `funct3`/`funct7` pair, is `ID_ILLEGAL` and takes a
 
 Parsed operands **must not** live in SysV caller-saved registers across a `call`. `reg_lookup` uses `r8` as its table index; `hash_get` overwrites `r8` with a slot pointer. The compiler therefore parks `rd` / `rs1` / `rs2` / `imm` in BSS (`op_rd` … `op_imm`) until `pack_*`.
 
+The image pointer returned to `asm_compile`'s caller is the same class of bug one level up: `r14`/`r15` are the SysV callee-saved pair the function *thought* it could use for `void **out` and `uint64 *outlen`, but `parse_mem` and `.ascii` already own them. Those two pointers live in BSS as well (`asm_outp`, `asm_lenp`).
+
 ```mermaid
 flowchart TD
   T[next_tok] --> I{ident?}

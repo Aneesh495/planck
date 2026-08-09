@@ -25,17 +25,11 @@ jobs:
       - name: fact
         run: ./bin/planck run programs/fact.s
       - name: memsmoke
-        run: |
-          ./bin/planck asm programs/memsmoke.s
-          ./bin/planck run --dump-regs programs/memsmoke.s
+        run: ./bin/planck run programs/memsmoke.s
       - name: lasmoke
-        run: |
-          ./bin/planck asm programs/lasmoke.s
-          ./bin/planck run --dump-regs programs/lasmoke.s
+        run: ./bin/planck run programs/lasmoke.s
       - name: memcpy
-        run: |
-          ./bin/planck asm programs/memcpy.s
-          ./bin/planck run --dump-regs programs/memcpy.s
+        run: ./bin/planck run programs/memcpy.s
       - name: callret
         run: ./bin/planck run programs/callret.s
       - name: isort
@@ -47,6 +41,4 @@ jobs:
       - name: crc32
         run: ./bin/planck run programs/crc32.s
       - name: fib recursive
-        run: |
-          ./bin/planck asm programs/fib_rec.s
-          ./bin/planck run --dump-regs programs/fib_rec.s
+        run: ./bin/planck run programs/fib_rec.s

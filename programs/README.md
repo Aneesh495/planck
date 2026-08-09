@@ -7,6 +7,9 @@ RV32IM guests assembled by Planck itself (`planck run file.s`). Each image exits
 | `exit0.s` | empty success |
 | `fib.s` | iterative fib(8) = 21 |
 | `fib_rec.s` | recursive fib(8) = 21 |
+| `callret.s` | leaf call/ret |
+| `memsmoke.s` | SW/LW through sp |
+| `lasmoke.s` | la + lw of a word |
 | `fact.s` | 8! = 40320 |
 | `memcpy.s` | 32-byte copy matches |
 | `isort.s` | 16 words sorted |
