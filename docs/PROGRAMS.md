@@ -11,6 +11,9 @@ Reset: `pc = 0x80000000`, `sp = 0x80000000 + mem_size - 16`, `x0` wired zero. Th
 | [`exit0.s`](../programs/exit0.s) | smallest legal image | `li` + `ecall` |
 | [`fib.s`](../programs/fib.s) | loop, `add`, `bge`, `mv`, `j` | iterative `fib(8) == 21` |
 | [`fib_rec.s`](../programs/fib_rec.s) | `call`/`ret`, stack, RAS | recursive `fib(8)`, `s0`/`s1` saved |
+| [`callret.s`](../programs/callret.s) | leaf `jal`/`jalr` | `ra` round-trip |
+| [`memsmoke.s`](../programs/memsmoke.s) | `sw`/`lw` through `sp` | reset stack is the high end of RAM |
+| [`lasmoke.s`](../programs/lasmoke.s) | `la` + `lw` | PC-relative `auipc`/`addi` |
 | [`fact.s`](../programs/fact.s) | `mul`, `bgt` | `8! = 40320` |
 | [`memcpy.s`](../programs/memcpy.s) | `lb`/`sb`, `beqz`/`bnez`, `la` | 32-byte copy then `memcmp` |
 | [`isort.s`](../programs/isort.s) | loads/stores, negative offset, `ble`/`bltz` | insertion sort of 16 words |

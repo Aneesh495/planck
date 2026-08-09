@@ -44,6 +44,9 @@ Catalog and how to add one: [`PROGRAMS.md`](PROGRAMS.md). CI (`planck run`) is t
 | `programs/exit0.s` | smallest image |
 | `programs/fib.s` | iterative loop, ABI-named R/B types |
 | `programs/fib_rec.s` | `call`/`ret`, stack, RAS |
+| `programs/callret.s` | leaf `jal`/`jalr` |
+| `programs/memsmoke.s` | `sw`/`lw` at reset `sp` |
+| `programs/lasmoke.s` | `la` + `lw` |
 | `programs/fact.s` | linear `mul` chain |
 | `programs/memcpy.s` | byte copy, `la`, `beqz` |
 | `programs/isort.s` | insertion sort, negative load offset |
