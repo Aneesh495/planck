@@ -6,7 +6,7 @@ Planck's memory system is a three-level hierarchy in front of a single DRAM late
 
 | Level | Size | Assoc | Line | Hit lat | Write policy | Allocate |
 |---|---|---|---|---|---|---|
-| L1I | 16 KiB | 2-way | 64 B | 1 | — (read only) | on miss |
+| L1I | 16 KiB | 2-way | 64 B | 1 | , (read only) | on miss |
 | L1D | 16 KiB | 4-way | 64 B | 3 | write-back | write-allocate |
 | L2  | 256 KiB | 8-way | 64 B | 12 | write-back | on L1 eviction / miss |
 | DRAM | guest RAM | 1 | 64 B | 100 | | |
@@ -61,7 +61,7 @@ Instruction fill is the same against L1I, with its own 2-entry inflight table. F
 
 ## Write-back
 
-Dirty L1D evictions write the line into L2 (which may itself miss, in which case L2 evicts to DRAM first — DRAM writes are 100c and occupy a single write port). We do not model a write queue beyond “one eviction in flight per level.” That is pessimistic and simple.
+Dirty L1D evictions write the line into L2 (which may itself miss, in which case L2 evicts to DRAM first, DRAM writes are 100c and occupy a single write port). We do not model a write queue beyond “one eviction in flight per level.” That is pessimistic and simple.
 
 ## Unaligned accesses
 

@@ -156,7 +156,7 @@ flowchart LR
   P -.-> clobber
 ```
 
-`add t4, t0, t1` must pack `rd=29, rs1=5, rs2=6`. If `rd` is left in `r8` across the last `parse_reg`, it becomes `6` and the guest sees `add t1, t0, t1` — or, worse, an illegal encoding.
+`add t4, t0, t1` must pack `rd=29, rs1=5, rs2=6`. If `rd` is left in `r8` across the last `parse_reg`, it becomes `6` and the guest sees `add t1, t0, t1`, or, worse, an illegal encoding.
 
 ## Guest program map
 

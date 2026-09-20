@@ -98,7 +98,7 @@ One call to `ooo_tick` is one *core* cycle. Inside, in this order:
 
 Squash, if flagged, restores the architectural map table from the ROB walk (young to old), resets the fetch queue, redirects PC, and increments a recovery counter.
 
-The order is not aesthetic. Commit-first is how you keep ROB capacity moving. Fetch-last is how you avoid using a redirected PC in the same cycle you just discovered you were wrong, unless you explicitly model same-cycle redirect — Planck does not. Redirects take one bubble. That is documented, parameterized, and counted as `stall.redirect`.
+The order is not aesthetic. Commit-first is how you keep ROB capacity moving. Fetch-last is how you avoid using a redirected PC in the same cycle you just discovered you were wrong, unless you explicitly model same-cycle redirect, Planck does not. Redirects take one bubble. That is documented, parameterized, and counted as `stall.redirect`.
 
 ## Data layout philosophy
 
@@ -125,7 +125,7 @@ There are three clocks and mixing them is a bug:
 
 ## Error model
 
-The host has no errno objects. Syscalls return the Linux negative errno in `rax` and the wrappers turn that into a branch to `host_die`, which writes a single line to stderr and `_exit(1)`. Guest faults do not kill the host: they write `mcause` / `mtval` / `mepc` and, if `mtvec` is zero (the default for bare programs), halt with a readable dump. If `mtvec` is set, the functional core jumps to the handler. The OoO core does the same at commit, not at detect — precise exceptions.
+The host has no errno objects. Syscalls return the Linux negative errno in `rax` and the wrappers turn that into a branch to `host_die`, which writes a single line to stderr and `_exit(1)`. Guest faults do not kill the host: they write `mcause` / `mtval` / `mepc` and, if `mtvec` is zero (the default for bare programs), halt with a readable dump. If `mtvec` is set, the functional core jumps to the handler. The OoO core does the same at commit, not at detect, precise exceptions.
 
 ## What this is not
 
