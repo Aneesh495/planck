@@ -52,7 +52,7 @@ Direct-mapped is a choice. A 2-way BTB would alias less; 128 direct is readable 
 
 Call detection at fetch (using BTB `kind=call`, or at decode once we know `JAL rd` with `rd=x1/x5`): push `pc+4`.
 
-Return detection: `JALR x0, 0(x1)` or `JALR x0, 0(x5)` — the ABI returns. Fetch NPC = RAS TOS, pop.
+Return detection: `JALR x0, 0(x1)` or `JALR x0, 0(x5)`, the ABI returns. Fetch NPC = RAS TOS, pop.
 
 ROB entries for calls/returns store `{ras_tos_before, ras_val}`. Squash restores TOS so a mispredicted call does not leave a garbage return address for a later true return.
 

@@ -70,7 +70,7 @@ Immediates are sign-extended to 32 bits except `u`-type, which fills `[31:12]` a
 | `EBREAK` | I | `1110011` | 000 | imm=1 | breakpoint halt |
 | `CSRRW` `CSRRS` `CSRRC` `CSRRWI` `CSRRSI` `CSRRCI` | I | `1110011` | | | see CSR section |
 
-Shifts mask the amount with `0x1f`. `FENCE` does not order anything the functional core would otherwise reorder — the functional core does not reorder. In OoO mode `FENCE` is a full pipeline drain: it occupies the ROB and does not commit until older loads and stores have committed. That is stronger than RV `FENCE` and weaker than `FENCE.I`; it is documented here so nobody thinks we implemented the Zifencei prefetch story.
+Shifts mask the amount with `0x1f`. `FENCE` does not order anything the functional core would otherwise reorder, the functional core does not reorder. In OoO mode `FENCE` is a full pipeline drain: it occupies the ROB and does not commit until older loads and stores have committed. That is stronger than RV `FENCE` and weaker than `FENCE.I`; it is documented here so nobody thinks we implemented the Zifencei prefetch story.
 
 ### RV32M
 

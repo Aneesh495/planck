@@ -75,7 +75,7 @@ PC-relative immediates are `target - ASM_LC` **before** the instruction is emitt
 
 ## Shift immediates
 
-`slli` / `srli` / `srai` are I-type with `imm[11:5] = funct7` and `imm[4:0] = shamt`. The assembler builds that 12-bit field, then calls `pack_i`. `srai` has `funct7 = 0x20`; the others have `0x00`. Using a clobbered `mnem_rec` pointer here used to encode the opcode as garbage — the shift parser keeps the record in `r11` with no intervening calls.
+`slli` / `srli` / `srai` are I-type with `imm[11:5] = funct7` and `imm[4:0] = shamt`. The assembler builds that 12-bit field, then calls `pack_i`. `srai` has `funct7 = 0x20`; the others have `0x00`. Using a clobbered `mnem_rec` pointer here used to encode the opcode as garbage, the shift parser keeps the record in `r11` with no intervening calls.
 
 ## `li` and `la`
 

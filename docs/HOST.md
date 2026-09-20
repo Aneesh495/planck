@@ -50,9 +50,9 @@ OOM: if the bump would exceed the mapping, `host_die("arena: out of memory")`. S
 
 - `io_write(fd, buf, len)`
 - `io_cstr(fd, zstring)`
-- `io_u64(fd, val, width, base)` — base 10 or 16, width 0 means no pad
-- `io_i64` — sign then `io_u64`
-- `io_hex32` — `0x` + 8 digits
+- `io_u64(fd, val, width, base)`, base 10 or 16, width 0 means no pad
+- `io_i64`, sign then `io_u64`
+- `io_hex32`, `0x` + 8 digits
 - `io_nl`, `io_sp`, `io_chr`
 
 No printf. A stats line is a sequence of those calls. That is annoying to write and impossible to format-string inject.
@@ -67,7 +67,7 @@ hash_put(map, key, keylen, val) -> 0 ok, -1 full
 hash_get(map, key, keylen, *val) -> 0 hit, -1 miss
 ```
 
-Used for labels and `.equ`. Cap starts at 1024. `hash_grow` allocates 2x from the arena and reinserts. Old table is leaked in arena terms — bump allocators do that. Assembler runs once per process in `run`, many times in `test`; tests `arena_reset`.
+Used for labels and `.equ`. Cap starts at 1024. `hash_grow` allocates 2x from the arena and reinserts. Old table is leaked in arena terms, bump allocators do that. Assembler runs once per process in `run`, many times in `test`; tests `arena_reset`.
 
 ## Time
 

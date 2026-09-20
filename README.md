@@ -1,6 +1,6 @@
 # Planck
 
-**A cycle-accurate out-of-order RV32IM core, cache hierarchy, and assembler — written in pure x86-64 assembly.**
+**A cycle-accurate out-of-order RV32IM core, cache hierarchy, and assembler, written in pure x86-64 assembly.**
 
 Zero libc. Zero C. Linux syscalls, NASM, and a microarchitecture you can actually measure.
 
@@ -24,7 +24,7 @@ Zero libc. Zero C. Linux syscalls, NASM, and a microarchitecture you can actuall
 
 Planck is a host program that **is** a CPU: an x86-64 binary with no C runtime that boots an RV32IM guest, assembles it, runs it through either a functional interpreter or a cycle-accurate superscalar core, and prints IPC, cache miss rates, branch mispredicts, and ROB stall breakdowns.
 
-It exists because the interesting part of a processor is not the ISA cheat-sheet — it is rename, replay, store forwarding, and the days you lose to a cache-line-sized bug.
+It exists because the interesting part of a processor is not the ISA cheat-sheet, it is rename, replay, store forwarding, and the days you lose to a cache-line-sized bug.
 
 ## Why this exists
 
@@ -34,7 +34,7 @@ Most “I wrote a CPU” projects are Verilog on an FPGA, or a C interpreter wit
 - The **guest is RISC-V**, so every instruction, CSR, and trap has a spec you can disagree with in public.
 - The **timing model is a real OoO core**, not “add 1 to a cycle counter per instruction.”
 
-If you hire for compilers, CPU, kernel, HFT FPGA, or performance engineering, this is the artifact I want on the table: data layouts, invariants, and cycle counters — not a framework.
+If you hire for compilers, CPU, kernel, HFT FPGA, or performance engineering, this is the artifact I want on the table: data layouts, invariants, and cycle counters, not a framework.
 
 ## What it does
 
@@ -237,10 +237,10 @@ make lines      # count instruction and source lines
 
 If you only open a handful of files, make them:
 
-1. `src/ooo/pipeline.asm` — one cycle of the machine, in order, with the stall reasons.
-2. `src/ooo/fu.asm` — combinational ALU/branch/M eval used by the timing model.
-3. `src/asm/compile.asm` — two-pass parse/encode, BSS operand stash, pseudo expansions.
-4. `src/asm/tables.asm` — the ISA as a mnemonic table, not a switch-statement novel.
+1. `src/ooo/pipeline.asm`, one cycle of the machine, in order, with the stall reasons.
+2. `src/ooo/fu.asm`, combinational ALU/branch/M eval used by the timing model.
+3. `src/asm/compile.asm`, two-pass parse/encode, BSS operand stash, pseudo expansions.
+4. `src/asm/tables.asm`, the ISA as a mnemonic table, not a switch-statement novel.
 
 Then `docs/MICROARCHITECTURE.md` for the invariants those files are supposed to keep.
 
