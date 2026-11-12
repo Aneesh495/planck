@@ -72,6 +72,8 @@ SRCS = $(SRC_HOST) $(SRC_CORE) $(SRC_ASM) $(SRC_DIS) $(SRC_CACHE) \
 OBJS = $(patsubst src/%.asm,obj/%.o,$(filter src/%,$(SRCS))) \
        $(patsubst tests/%.asm,obj/tests/%.o,$(filter tests/%,$(SRCS)))
 
+INCLUDES = $(wildcard src/include/*.inc)
+
 .PHONY: all clean lines dirs test
 
 all: dirs bin/planck
@@ -80,16 +82,19 @@ dirs:
 	@mkdir -p bin obj/host obj/core obj/asm obj/disasm obj/cache \
 	          obj/predict obj/ooo obj/stats obj/monitor obj/tests
 
-obj/%.o: src/%.asm
+obj/%.o: src/%.asm $(INCLUDES)
 	@mkdir -p $(dir $@)
 	$(NASM) $(NASMFLAGS) -o $@ $<
 
-obj/tests/%.o: tests/%.asm
+obj/tests/%.o: tests/%.asm $(INCLUDES)
 	@mkdir -p $(dir $@)
 	$(NASM) $(NASMFLAGS) -o $@ $<
 
-bin/planck: $(OBJS)
+bin/planck: $(OBJS) | bin
 	$(LD) $(LDFLAGS) -o $@ $(OBJS)
+
+bin:
+	@mkdir -p $@
 
 test: all
 	./bin/planck test
